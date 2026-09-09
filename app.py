@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 import requests
 from flask_cors import CORS
 
-from classifier.rules import score_product, grade_to_score
+from classifier.rules import score_product, score_to_grade, grade_to_score
 from classifier.model import classify_ml
 from models import db, Scan
 
@@ -50,15 +50,20 @@ def scan(barcode):
         "nutriments": nutriments,
     }
 
-    official_grade = product.get("nutriscore_grade")
-    final_grade = official_grade.upper() if official_grade else None
-    final_score = grade_to_score(official_grade)
-
     rule_score, flags = score_product(nutriments)
     ml_verdict, ml_confidence = classify_ml(nutriments)
 
-    result["final_grade"] = final_grade
-    result["final_score"] = final_score
+    our_score = round(0.6 * rule_score + 0.4 * (ml_confidence * 100))
+    our_grade = score_to_grade(our_score)
+
+    official_grade_raw = product.get("nutriscore_grade")
+    official_grade = official_grade_raw.upper() if official_grade_raw else None
+    official_score = grade_to_score(official_grade_raw)
+
+    result["our_score"] = our_score
+    result["our_grade"] = our_grade
+    result["official_score"] = official_score
+    result["official_grade"] = official_grade
     result["flags"] = flags
     result["ml_verdict"] = ml_verdict
     result["ml_confidence"] = ml_confidence
@@ -66,7 +71,7 @@ def scan(barcode):
     record = Scan(
         barcode=barcode,
         product_name=result["name"],
-        verdict=final_grade if final_grade else "Unknown",
+        verdict=our_grade,
         confidence=ml_confidence,
     )
     db.session.add(record)
