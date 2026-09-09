@@ -1,28 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="style.css">
-  <title>NutriScan</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriScan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
-    <h1>NutriScan</h1>
-    <button id="scan-button">Scan Barcode</button>
+  <div class="page">
+    <header class="brand">NutriScan</header>
 
-    <div id="camera-feed"></div>
+    <main>
+      <section class="hero">
+        <h1>Scan the label.<br>Know what's inside.</h1>
+        <p class="hero-sub">Point your camera at any packaged food barcode for an instant health check.</p>
 
-    <details id="manual-entry">
-      <summary>Enter barcode manually</summary>
-      <form id="manual-form">
-        <input type="text" id="manual-input" placeholder="Enter barcode number">
-        <button type="submit">Look up</button>
-      </form>
-    </details>
+        <div id="camera-feed" class="viewfinder">
+          <span class="bracket bracket-tl"></span>
+          <span class="bracket bracket-tr"></span>
+          <span class="bracket bracket-bl"></span>
+          <span class="bracket bracket-br"></span>
+          <div class="scan-line"></div>
+        </div>
 
-    <div id="result"></div>
-  </main>
+        <button id="scan-button" class="btn-primary">Start Scanning</button>
+
+        <details class="manual-entry">
+          <summary>Enter barcode manually</summary>
+          <form id="manual-form">
+            <input type="text" id="manual-input" placeholder="e.g. 3017620422003">
+            <button type="submit" class="btn-secondary">Look up</button>
+          </form>
+        </details>
+      </section>
+
+      <section id="result-section">
+        <div id="result"></div>
+      </section>
+    </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
   <script src="scanner.js"></script>
 </body>
+</html>
