@@ -55,33 +55,53 @@ function lookupBarcode(barcode) {
 }
 
 function renderResult(data) {
-  const grade = data.final_grade;
-  const score = data.final_score;
-
   const imageHtml = data.image_url
     ? `<img src="${data.image_url}" alt="${data.name}" class="product-image">`
     : "";
 
   const flagsHtml = data.flags.length
     ? data.flags.map(flag => `<li>${flag}</li>`).join("")
-    : "<li class='no-flags'>Our basic sugar/salt/fat checks found no issues — the official grade may still reflect other factors (like added sugars in a beverage, low fiber, or category-specific scoring).</li>";
+    : "<li class='no-flags'>No high sugar, salt, or saturated fat flags triggered by our rule checks.</li>";
 
   const mlNote = data.ml_verdict === "unhealthy"
-    ? `Our ML model also independently rates this <strong>unhealthy</strong> (${Math.round((1 - data.ml_confidence) * 100)}% confidence).`
+    ? `Our ML model independently rates this <strong>unhealthy</strong> (${Math.round((1 - data.ml_confidence) * 100)}% confidence).`
     : `Our ML model independently rates this <strong>healthy</strong> (${Math.round(data.ml_confidence * 100)}% confidence).`;
+
+  const officialHtml = data.official_grade
+    ? `
+      <div class="badge-block">
+        <div class="grade-badge grade-${data.official_grade}">
+          <span class="grade-letter">${data.official_grade}</span>
+          <span class="grade-score">${data.official_score}/100</span>
+        </div>
+        <p class="badge-label">Official Nutri-Score (Open Food Facts)</p>
+      </div>`
+    : `
+      <div class="badge-block">
+        <div class="grade-badge grade-unknown">
+          <span class="grade-letter">?</span>
+        </div>
+        <p class="badge-label">No official Nutri-Score available</p>
+      </div>`;
 
   document.getElementById("result").innerHTML = `
     ${imageHtml}
     <h2 class="product-name">${data.name}</h2>
 
-    <div class="grade-badge grade-${grade}">
-      <span class="grade-letter">${grade}</span>
-      <span class="grade-score">${score}/100</span>
+    <div class="badges-row">
+      <div class="badge-block">
+        <div class="grade-badge grade-${data.our_grade}">
+          <span class="grade-letter">${data.our_grade}</span>
+          <span class="grade-score">${data.our_score}/100</span>
+        </div>
+        <p class="badge-label">Our Score</p>
+      </div>
+
+      ${officialHtml}
     </div>
-    <p class="grade-source">Official Nutri-Score grade, from Open Food Facts</p>
 
     <div class="explanation-block">
-      <h3>Why this grade?</h3>
+      <h3>Why this score?</h3>
       <ul class="flags-list">${flagsHtml}</ul>
       <p class="ml-note">${mlNote}</p>
     </div>
