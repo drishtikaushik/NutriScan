@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <title>NutriScan</title>
+</head>
+<body>
+  <main>
+    <h1>NutriScan</h1>
+    <button id="scan-button">Scan Barcode</button>
+
+    <div id="camera-feed"></div>
+
+    <details id="manual-entry">
+      <summary>Enter barcode manually</summary>
+      <form id="manual-form">
+        <input type="text" id="manual-input" placeholder="Enter barcode number">
+        <button type="submit">Look up</button>
+      </form>
+    </details>
+
+    <div id="result"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+  <script src="scanner.js"></script>
+</body>
