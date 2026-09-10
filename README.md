@@ -2,7 +2,7 @@
 
 Scan the barcode on any packaged food and get an instant health grade — built as a final year project by Drishti Kaushik.
 
-Point your camera at a product, and NutriScan looks it up on Open Food Facts, runs it through a hand-built rule engine and a self-trained machine learning model, and shows you exactly why it scored the way it did — alongside the official Nutri-Score, so you can compare.
+Point your camera at a product, and NutriScan looks it up on Open Food Facts, runs it through a hand-built rule engine and a self-trained machine learning model, and shows you exactly why it scored the way it did - alongside the official Nutri-Score, so you can compare.
 
 ---
 
@@ -10,11 +10,11 @@ Point your camera at a product, and NutriScan looks it up on Open Food Facts, ru
 
 - **Camera-based barcode scanning** in the browser (no app install) using QuaggaJS
 - **Manual barcode entry** as a fallback when the camera struggles
-- **Product lookup** via the Open Food Facts API — ingredients, nutrients, existing labels
+- **Product lookup** via the Open Food Facts API - ingredients, nutrients, existing labels
 - **Two independent health scores, shown side by side:**
-  - **Our Score** — a 0–100 score from a rule-based nutrient checker (sugar/salt/saturated fat thresholds, inspired by UK FSA "high in" guidance) blended with a Random Forest model trained on real product data
-  - **Official Nutri-Score** — the published A–E grade straight from Open Food Facts, for direct comparison
-- **Explanations, not just a verdict** — every flagged nutrient is listed, plus the ML model's independent confidence
+  - **Our Score** - a 0–100 score from a rule-based nutrient checker (sugar/salt/saturated fat thresholds, inspired by UK FSA "high in" guidance) blended with a Random Forest model trained on real product data
+  - **Official Nutri-Score** - the published A–E grade straight from Open Food Facts, for direct comparison
+- **Explanations, not just a verdict** - every flagged nutrient is listed, plus the ML model's independent confidence
 - **Scan history** saved to a local database
 
 ---
