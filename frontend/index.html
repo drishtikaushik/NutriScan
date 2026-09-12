@@ -3,46 +3,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NutriScan</title>
+<title>NutriScan — Food Health Scanner</title>
+<meta name="description" content="Scan a barcode for an instant food health report, comparing a self-trained model against the official Nutri-Score.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="page">
-    <header class="brand">NutriScan</header>
 
-    <main>
-      <section class="hero">
-        <h1>Scan the label.<br>Know what's inside.</h1>
-        <p class="hero-sub">Point your camera at any packaged food barcode for an instant health check.</p>
+<header class="app-header">
+  <span class="brand">NutriScan</span>
+  <div class="header-actions">
+    <span class="status-pill" id="system-status">
+      <span class="status-dot"></span>
+      <span class="status-text">Ready</span>
+    </span>
+    <button id="sound-toggle" class="icon-btn" title="Toggle scan sound" aria-label="Toggle sound">
+      <svg id="sound-icon-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+      <svg id="sound-icon-off" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+      </svg>
+    </button>
+  </div>
+</header>
 
-        <div id="camera-feed" class="viewfinder">
-          <span class="bracket bracket-tl"></span>
-          <span class="bracket bracket-tr"></span>
-          <span class="bracket bracket-bl"></span>
-          <span class="bracket bracket-br"></span>
-          <div class="scan-line"></div>
+<main class="page">
+
+  <section class="hero">
+    <h1>Scan the label.<br>Know what's inside.</h1>
+    <p class="hero-sub">Point your camera at a barcode, upload a photo, or try a demo product below.</p>
+
+    <div class="scanner-card">
+      <div id="camera-feed" class="viewfinder">
+        <span class="bracket bracket-tl"></span>
+        <span class="bracket bracket-tr"></span>
+        <span class="bracket bracket-bl"></span>
+        <span class="bracket bracket-br"></span>
+        <div class="scan-line"></div>
+
+        <div id="camera-placeholder" class="viewfinder-placeholder">
+          <p class="placeholder-title">Camera is off</p>
+          <p class="placeholder-sub">Start the camera or upload a photo to scan a barcode</p>
         </div>
 
-        <button id="scan-button" class="btn-primary">Start Scanning</button>
+        <div id="camera-badge" class="hud-status-badge hidden">
+          <span class="pulse-dot"></span>
+          <span id="camera-status-text">Scanning</span>
+        </div>
+      </div>
 
-        <details class="manual-entry">
-          <summary>Enter barcode manually</summary>
-          <form id="manual-form">
-            <input type="text" id="manual-input" placeholder="e.g. 3017620422003">
-            <button type="submit" class="btn-secondary">Look up</button>
-          </form>
-        </details>
-      </section>
+      <div class="scanner-controls">
+        <button id="scan-button" class="btn btn-primary">
+          <span id="scan-btn-label">Start Camera</span>
+        </button>
+        <button id="upload-btn" class="btn btn-secondary">Upload Photo</button>
+        <input type="file" id="barcode-file-input" accept="image/*" class="hidden">
+      </div>
 
-      <section id="result-section">
-        <div id="result"></div>
-      </section>
-    </main>
-  </div>
+      <div class="demo-shelf">
+        <span class="shelf-label">Try a demo product</span>
+        <div class="demo-chips">
+          <button class="demo-chip" data-barcode="3017620422003">Nutella</button>
+          <button class="demo-chip" data-barcode="5449000000996">Coca-Cola</button>
+          <button class="demo-chip" data-barcode="8901063136434">Milk Bikis</button>
+          <button class="demo-chip" data-barcode="8902579103057">Frooti</button>
+        </div>
+      </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
-  <script src="scanner.js"></script>
+      <form id="manual-form" class="search-form">
+        <div class="input-icon-group">
+          <input type="text" id="manual-input" placeholder="Or type a barcode number" autocomplete="off" inputmode="numeric">
+          <button type="button" id="clear-input-btn" class="clear-btn hidden" aria-label="Clear">✕</button>
+        </div>
+        <button type="submit" class="btn btn-secondary">Look up</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="result-section" class="result-section">
+    <div id="result-empty" class="state-card">
+      <h3>No product scanned yet</h3>
+      <p>Scan a barcode, upload a photo, or pick a demo product to see a full report.</p>
+    </div>
+
+    <div id="result-loading" class="state-card hidden">
+      <div class="spinner"></div>
+      <h3 id="loading-title">Looking this up…</h3>
+      <p id="loading-sub">Fetching data from Open Food Facts and running both classifiers</p>
+    </div>
+
+    <div id="result" class="hidden"></div>
+  </section>
+
+  <section class="history-section">
+    <div class="section-head">
+      <h2>Recent scans <span class="badge-count" id="history-count">0</span></h2>
+      <button id="refresh-history-btn" class="icon-link-btn">Refresh</button>
+    </div>
+    <div id="history-list" class="history-list">
+      <p class="history-empty">No scans yet.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <p>NutriScan — Final Year Project by <strong>Drishti Kaushik</strong></p>
+  <p class="footer-sub">Data from <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener">Open Food Facts</a></p>
+</footer>
+
+<div id="toast-hub" class="toast-hub"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+<script src="scanner.js"></script>
 </body>
 </html>
