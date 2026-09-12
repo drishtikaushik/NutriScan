@@ -125,4 +125,4 @@ Open `http://localhost:8000/index.html`, allow camera access, and scan a product
 
 ## Author
 
-Drishti Kaushik — final year B.Tech CSE (AI & ML), Aravali College of Engineering and Management
+Drishti Kaushik
