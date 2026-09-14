@@ -1,8 +1,9 @@
+import json   
 from flask import Flask, jsonify
 import requests
 from flask_cors import CORS
 
-from classifier.rules import score_product, score_to_grade, grade_to_score
+from classifier.rules import score_product, score_to_grade, grade_to_score, has_insufficient_data
 from classifier.model import classify_ml
 from models import db, Scan
 
@@ -22,11 +23,19 @@ HEADERS = {
 }
 
 def fetch_product(barcode):
-    url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
-    response = requests.get(url, headers=HEADERS)
-    print("STATUS CODE:", response.status_code)
-    data = response.json()
-    return data
+    fields = "product_name,image_url,ingredients_text,nutriments,nutriscore_grade,additives_tags,status"
+    url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
+
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=8)
+        print("STATUS CODE:", response.status_code)
+        return response.json()
+    except requests.exceptions.Timeout:
+        print("[fetch_product] Request timed out")
+        return {"status": 0}
+    except requests.exceptions.RequestException as e:
+        print(f"[fetch_product] Request failed: {e}")
+        return {"status": 0}
 
 @app.route("/")
 def home():
@@ -34,6 +43,12 @@ def home():
 
 @app.route("/api/scan/<barcode>")
 def scan(barcode):
+    existing = Scan.query.filter_by(barcode=barcode).order_by(Scan.timestamp.desc()).first()
+    if existing:
+        cached_result = existing.to_dict()
+        cached_result["cached"] = True
+        return jsonify(cached_result)
+
     data = fetch_product(barcode)
 
     if data.get("status") != 1:
@@ -41,6 +56,7 @@ def scan(barcode):
 
     product = data["product"]
     nutriments = product.get("nutriments", {})
+    additives = product.get("additives_tags", [])
 
     result = {
         "barcode": barcode,
@@ -48,36 +64,49 @@ def scan(barcode):
         "image_url": product.get("image_url", ""),
         "ingredients_text": product.get("ingredients_text", ""),
         "nutriments": nutriments,
+        "cached": False,
     }
 
-    rule_score, flags = score_product(nutriments)
-    ml_verdict, ml_confidence = classify_ml(nutriments)
-
-    our_score = round(0.6 * rule_score + 0.4 * (ml_confidence * 100))
-    our_grade = score_to_grade(our_score)
-
     official_grade_raw = product.get("nutriscore_grade")
-    official_grade = official_grade_raw.upper() if official_grade_raw else None
-    official_score = grade_to_score(official_grade_raw)
+    result["official_grade"] = official_grade_raw.upper() if official_grade_raw else None
+    result["official_score"] = grade_to_score(official_grade_raw)
 
-    result["our_score"] = our_score
-    result["our_grade"] = our_grade
-    result["official_score"] = official_score
-    result["official_grade"] = official_grade
-    result["flags"] = flags
-    result["ml_verdict"] = ml_verdict
-    result["ml_confidence"] = ml_confidence
+    if has_insufficient_data(nutriments):
+        result["insufficient_data"] = True
+        result["our_score"] = None
+        result["our_grade"] = None
+        result["rule_score"] = None
+        result["flags"] = []
+        result["ml_verdict"] = "unknown"
+        result["ml_confidence"] = None
+        result["ml_top_factors"] = []
+    else:
+        result["insufficient_data"] = False
+        rule_score, flags = score_product(nutriments, additives)
+        ml_verdict, ml_confidence, ml_top_factors = classify_ml(nutriments)
 
-    record = Scan(
-        barcode=barcode,
-        product_name=result["name"],
-        verdict=our_grade,
-        confidence=ml_confidence,
-    )
+        our_score = round(0.6 * rule_score + 0.4 * (ml_confidence * 100))
+
+        result["our_score"] = our_score
+        result["our_grade"] = score_to_grade(our_score)
+        result["rule_score"] = rule_score
+        result["flags"] = flags
+        result["ml_verdict"] = ml_verdict
+        result["ml_confidence"] = ml_confidence
+        result["ml_top_factors"] = ml_top_factors
+
+    record = Scan(barcode=barcode, result_json=json.dumps(result))
     db.session.add(record)
     db.session.commit()
 
     return jsonify(result)
+
+
+@app.route("/api/history")
+def history():
+    scans = Scan.query.order_by(Scan.timestamp.desc()).limit(100).all()
+    return jsonify([s.to_dict() for s in scans])
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
