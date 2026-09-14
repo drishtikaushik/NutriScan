@@ -1,4 +1,4 @@
-import json   
+import json
 from flask import Flask, jsonify
 import requests
 from flask_cors import CORS
@@ -23,7 +23,7 @@ HEADERS = {
 }
 
 def fetch_product(barcode):
-    fields = "product_name,image_url,ingredients_text,nutriments,nutriscore_grade,additives_tags,status"
+    fields = "product_name,image_url,ingredients_text,nutriments,nutriscore_grade,additives_tags,nova_group,allergens_tags,status"
     url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
 
     try:
@@ -57,6 +57,9 @@ def scan(barcode):
     product = data["product"]
     nutriments = product.get("nutriments", {})
     additives = product.get("additives_tags", [])
+    nova_group = product.get("nova_group")
+    allergens_tags = product.get("allergens_tags", [])
+    allergens = [a.split(":")[-1].replace("-", " ").title() for a in allergens_tags]
 
     result = {
         "barcode": barcode,
@@ -70,6 +73,8 @@ def scan(barcode):
     official_grade_raw = product.get("nutriscore_grade")
     result["official_grade"] = official_grade_raw.upper() if official_grade_raw else None
     result["official_score"] = grade_to_score(official_grade_raw)
+    result["nova_group"] = nova_group
+    result["allergens"] = allergens
 
     if has_insufficient_data(nutriments):
         result["insufficient_data"] = True
@@ -82,7 +87,7 @@ def scan(barcode):
         result["ml_top_factors"] = []
     else:
         result["insufficient_data"] = False
-        rule_score, flags = score_product(nutriments, additives)
+        rule_score, flags = score_product(nutriments, additives, nova_group)
         ml_verdict, ml_confidence, ml_top_factors = classify_ml(nutriments)
 
         our_score = round(0.6 * rule_score + 0.4 * (ml_confidence * 100))
