@@ -276,7 +276,6 @@ body {
 .flags-list li { padding: 7px 0; border-bottom: 1px dotted var(--line); }
 .flags-list li:last-child { border-bottom: none; }
 .no-flags { color: var(--ink-soft); font-style: italic; }
-.ml-note { font-size: 13px; color: var(--ink-soft); margin-top: 14px; }
 
 /* ── History ────────────────────────────────────────────────── */
 
@@ -371,15 +370,7 @@ body {
 
 .history-time { color: var(--ink-soft); font-size: 12px; }
 
-.cached-note {
-  font-size: 12px;
-  color: var(--ink-soft);
-  font-style: italic;
-  background: var(--paper);
-  border-radius: 4px;
-  padding: 8px 10px;
-  margin: 0 0 14px;
-}
+
 
 #history-detail-section { margin-top: 20px; }
 
@@ -470,7 +461,6 @@ body {
   font-size: 13px;
   margin: 0;
 }
-
 
 .allergen-banner {
   background: var(--red-bg);
