@@ -470,3 +470,18 @@ body {
   font-size: 13px;
   margin: 0;
 }
+
+
+.allergen-banner {
+  background: var(--red-bg);
+  border-left: 3px solid var(--red);
+  color: var(--red);
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.allergen-banner strong {
+  color: var(--ink);
+}
