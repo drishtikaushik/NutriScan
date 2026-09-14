@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan History — NutriScan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <span class="brand">NutriScan</span>
+  <div class="header-actions">
+    <a href="index.html" class="text-link">← Back to scanner</a>
+  </div>
+</header>
+
+<main class="page">
+  <section class="hero hero-compact">
+    <h1>Scan history</h1>
+    <p class="hero-sub">Every product you've scanned before — search and reopen any result instantly.</p>
+  </section>
+
+  <div class="history-page-search">
+    <input type="text" id="history-search" placeholder="Search by product name or barcode" autocomplete="off">
+  </div>
+
+  <section id="history-page-list" class="history-list">
+    <p class="history-empty">Loading…</p>
+  </section>
+
+  <section id="history-detail-section" class="result-section hidden">
+    <div id="history-detail"></div>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <p>NutriScan — Final Year Project by <strong>Drishti Kaushik</strong></p>
+</footer>
+
+<script src="common.js"></script>
+<script src="history.js"></script>
+</body>
+</html>
