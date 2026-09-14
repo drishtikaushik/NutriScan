@@ -6,10 +6,15 @@ function renderResult(data, container) {
     ? `<img src="${data.image_url}" alt="${data.name}" class="product-image">`
     : "";
 
+  const allergensHtml = data.allergens && data.allergens.length
+    ? `<div class="allergen-banner"><strong>Contains:</strong> ${data.allergens.join(", ")}</div>`
+    : "";
+
   if (data.insufficient_data) {
     container.innerHTML = `
       ${imageHtml}
       <h2 class="product-name">${data.name}</h2>
+      ${allergensHtml}
       <div class="insufficient-card">
         <h3>Not enough data to score this product</h3>
         <p>Open Food Facts doesn't have sugar, salt, saturated fat, or energy data for this item yet — scoring on missing data would risk showing a misleading result, so we're not guessing.</p>
@@ -17,8 +22,6 @@ function renderResult(data, container) {
     `;
     return;
   }
-
-  // ... the rest of your existing function, unchanged, continues below
 
   const flagsHtml = data.flags.length
     ? data.flags.map((f) => `<li>${f}</li>`).join("")
@@ -42,6 +45,7 @@ function renderResult(data, container) {
   container.innerHTML = `
     ${imageHtml}
     <h2 class="product-name">${data.name}</h2>
+    ${allergensHtml}
     <div class="badges-row">
       <div class="badge-block">
         <div class="grade-badge grade-${data.our_grade}">
