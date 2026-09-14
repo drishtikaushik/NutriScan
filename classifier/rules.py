@@ -1,6 +1,7 @@
 HIGH_SUGAR = 22.5
 HIGH_SALT = 1.5
 HIGH_SAT_FAT = 5.0
+NOVA_PENALTY = 15
 
 ADDITIVES_OF_CONCERN = {
     "en:e102": "Tartrazine — EU-mandated hyperactivity warning in children",
@@ -18,10 +19,28 @@ ADDITIVES_OF_CONCERN = {
 ADDITIVE_PENALTY = 12
 MAX_ADDITIVE_PENALTY = 30
 
+CRITICAL_FIELDS = ["energy-kcal_100g", "sugars_100g", "salt_100g", "saturated-fat_100g"]
 
-def score_product(nutriments, additives):
+def has_insufficient_data(nutriments):
+    return all(nutriments.get(f) is None for f in CRITICAL_FIELDS)
+
+
+def score_product(nutriments, additives, nova_group):
     score = 100
     flags = []
+    missing_fields = []
+
+    for field, label in [
+        ("trans-fat_100g", "trans fat"),
+        ("sugars_100g", "sugar"),
+        ("salt_100g", "salt"),
+        ("saturated-fat_100g", "saturated fat"),
+    ]:
+        if nutriments.get(field) is None:
+            missing_fields.append(label)
+
+    if missing_fields:
+        flags.append(f"No data available for: {', '.join(missing_fields)} — these weren't checked")
 
     trans_fat = nutriments.get("trans-fat_100g", 0) or 0
     if trans_fat > 0:
@@ -54,13 +73,13 @@ def score_product(nutriments, additives):
         for code in matched:
             flags.append(f"Contains {ADDITIVES_OF_CONCERN[code]}")
 
+    if nova_group == 4:
+        score -= NOVA_PENALTY
+        flags.append("Ultra-processed food (NOVA group 4) — associated with poorer health outcomes independent of nutrient content")
+
     score = max(0, min(100, round(score)))
     return score, flags
 
-CRITICAL_FIELDS = ["energy-kcal_100g", "sugars_100g", "salt_100g", "saturated-fat_100g"]
-
-def has_insufficient_data(nutriments):
-    return all(nutriments.get(f) is None for f in CRITICAL_FIELDS)
 
 def score_to_grade(score):
     if score >= 85:
