@@ -18,8 +18,10 @@ const resultLoading = document.getElementById("result-loading");
 const resultBox = document.getElementById("result");
 const historyList = document.getElementById("history-list");
 const historyCount = document.getElementById("history-count");
-const refreshHistoryBtn = document.getElementById("refresh-history-btn");
 const toastHub = document.getElementById("toast-hub");
+const modalOverlay = document.getElementById("modal-overlay");
+const modalMessage = document.getElementById("modal-message");
+const modalClose = document.getElementById("modal-close");
 
 let cameraRunning = false;
 let lastScanned = null;
@@ -35,7 +37,27 @@ function showToast(message, type = "success") {
   setTimeout(() => toast.remove(), 3500);
 }
 
-// ── Sound (simple beep, no audio file needed) ────────────────────
+// ── Modal (centered popup, used for "not found") ────────────────────
+
+function showModal(message) {
+  modalMessage.textContent = message;
+  modalOverlay.classList.remove("hidden");
+}
+
+function hideModal() {
+  modalOverlay.classList.add("hidden");
+}
+
+modalClose.addEventListener("click", hideModal);
+
+// Clicking the dark backdrop (not the card itself) also closes it —
+// checking event.target lets us tell the two apart, since both trigger
+// the same "click" event on this listener.
+modalOverlay.addEventListener("click", (e) => {
+  if (e.target === modalOverlay) hideModal();
+});
+
+// ── Sound ─────────────────────────────────────────────────────────
 
 function playBeep() {
   if (!soundEnabled) return;
@@ -190,7 +212,7 @@ async function lookupBarcode(barcode) {
     const res = await fetch(`${API_BASE}/api/scan/${barcode}`);
 
     if (res.status === 404) {
-      showToast(`No product found for ${barcode}.`, "error");
+      showModal(`No product found for barcode ${barcode}. It may not be in Open Food Facts yet.`);
       setState("empty");
       return;
     }
@@ -201,9 +223,17 @@ async function lookupBarcode(barcode) {
     }
 
     const data = await res.json();
-    renderResult(data);
+    renderResult(data, resultBox);          // shared function, from common.js
     setState("result");
-    showToast(`${data.name} scanned successfully.`);
+
+    if (data.cached) {
+      showToast(`${data.name} — loaded from history, not re-processed.`);
+    } else {
+      showToast(`${data.name} scanned successfully.`);
+    }
+
+    document.getElementById("result-section").scrollIntoView({ behavior: "smooth", block: "start" });
+
     loadHistory();
   } catch (err) {
     console.error(err);
@@ -212,52 +242,7 @@ async function lookupBarcode(barcode) {
   }
 }
 
-function renderResult(data) {
-  const imageHtml = data.image_url
-    ? `<img src="${data.image_url}" alt="${data.name}" class="product-image">`
-    : "";
-
-  const flagsHtml = data.flags.length
-    ? data.flags.map((f) => `<li>${f}</li>`).join("")
-    : "<li class='no-flags'>No high sugar, salt, or saturated fat flags triggered.</li>";
-
-  const mlNote =
-    data.ml_verdict === "unhealthy"
-      ? `Our ML model independently rates this <strong>unhealthy</strong> (${Math.round((1 - data.ml_confidence) * 100)}% confidence).`
-      : `Our ML model independently rates this <strong>healthy</strong> (${Math.round(data.ml_confidence * 100)}% confidence).`;
-
-  const officialBadge = data.official_grade
-    ? `<div class="grade-badge grade-${data.official_grade}">
-         <span class="grade-letter">${data.official_grade}</span>
-         <span class="grade-score">${data.official_score}/100</span>
-       </div>`
-    : `<div class="grade-badge grade-unknown"><span class="grade-letter">?</span></div>`;
-
-  resultBox.innerHTML = `
-    ${imageHtml}
-    <h2 class="product-name">${data.name}</h2>
-    <div class="badges-row">
-      <div class="badge-block">
-        <div class="grade-badge grade-${data.our_grade}">
-          <span class="grade-letter">${data.our_grade}</span>
-          <span class="grade-score">${data.our_score}/100</span>
-        </div>
-        <p class="badge-label">Our Score</p>
-      </div>
-      <div class="badge-block">
-        ${officialBadge}
-        <p class="badge-label">Official Nutri-Score</p>
-      </div>
-    </div>
-    <div class="explanation-block">
-      <h3>Why this score?</h3>
-      <ul class="flags-list">${flagsHtml}</ul>
-      <p class="ml-note">${mlNote}</p>
-    </div>
-  `;
-}
-
-// ── History ───────────────────────────────────────────────────────
+// ── Mini history list (last 5, clickable) ──────────────────────────
 
 async function loadHistory() {
   try {
@@ -272,21 +257,19 @@ async function loadHistory() {
       return;
     }
 
-    historyList.innerHTML = scans
-      .slice(0, 8)
-      .map(
-        (s) => `
-        <div class="history-item">
-          <span><span class="verdict-dot ${s.verdict}"></span>${s.product_name || s.barcode}</span>
-          <span>${new Date(s.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-        </div>`
-      )
-      .join("");
+    historyList.innerHTML = scans.slice(0, 5).map(renderHistoryItemHtml).join("");
+
+    // Clicking a mini history row shows that result right here, no re-fetch needed —
+    // we already have the full data for it from this same /api/history response.
+    document.querySelectorAll(".history-item-clickable").forEach((btn, i) => {
+      btn.addEventListener("click", () => {
+        renderResult(scans[i], resultBox);
+        setState("result");
+      });
+    });
   } catch (err) {
     console.error("Couldn't load history:", err);
   }
 }
-
-refreshHistoryBtn.addEventListener("click", loadHistory);
 
 loadHistory();
