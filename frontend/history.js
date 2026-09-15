@@ -1,5 +1,7 @@
 const API_BASE = "http://localhost:5000";
 
+//const API_BASE = "http://192.168.32.46:5000";   // use your actual IP from Step 1
+
 const listEl = document.getElementById("history-page-list");
 const searchInput = document.getElementById("history-search");
 const detailSection = document.getElementById("history-detail-section");
