@@ -1,5 +1,7 @@
 const API_BASE = "http://localhost:5000";
 
+//const API_BASE = "http://192.168.32.46:5000";    replace with actual IP 
+
 // ── Element references ───────────────────────────────────────────
 const scanButton = document.getElementById("scan-button");
 const scanBtnLabel = document.getElementById("scan-btn-label");
